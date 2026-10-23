@@ -30,12 +30,23 @@ jobs:
         env:
           SHINYAPPS_TOKEN: ${{ secrets.SHINYAPPS_TOKEN }}
           SHINYAPPS_SECRET: ${{ secrets.SHINYAPPS_SECRET }}
+          SHINYAPPS_COMMAND: ${{ secrets.SHINYAPPS_COMMAND }}
         run: |
-          rsconnect::setAccountInfo(
-            name = "huchaoran",
-            token = Sys.getenv("SHINYAPPS_TOKEN"),
-            secret = Sys.getenv("SHINYAPPS_SECRET")
-          )
+          # Either paste the whole rsconnect::setAccountInfo(...) command that
+          # shinyapps.io copies (secret SHINYAPPS_COMMAND), or the token and
+          # secret separately. Stray spaces and line breaks are removed.
+          field <- function(cmd, key) {
+            m <- regmatches(cmd, regexec(paste0(key, "\\s*=\\s*['\"]([^'\"]+)['\"]"), cmd))[[1]]
+            if (length(m) == 2) m[2] else ""
+          }
+          cmd <- Sys.getenv("SHINYAPPS_COMMAND")
+          token <- if (nzchar(cmd)) field(cmd, "token") else Sys.getenv("SHINYAPPS_TOKEN")
+          secret <- if (nzchar(cmd)) field(cmd, "secret") else Sys.getenv("SHINYAPPS_SECRET")
+          token <- gsub("[[:space:]]", "", token)
+          secret <- gsub("[[:space:]]", "", secret)
+          cat("token length:", nchar(token), " secret length:", nchar(secret), "\n")
+          if (!nzchar(token) || !nzchar(secret)) stop("Token or secret is empty. Check the repository secrets.")
+          rsconnect::setAccountInfo(name = "huchaoran", token = token, secret = secret)
           rsconnect::deployApp(
             appName = "smam_app",
             appFiles = c("app.R", list.files("R", full.names = TRUE)),
