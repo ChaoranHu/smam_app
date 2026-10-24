@@ -6,16 +6,20 @@ model_math <- list(
     shiny::p("The state \\(S(t) \\in \\{M, R\\}\\) alternates between moving \\(M\\) and resting \\(R\\).",
              "Each moving bout lasts an exponential time with rate \\(\\lambda_M\\) and each resting bout",
              "an exponential time with rate \\(\\lambda_R\\). The location is"),
-    shiny::p("$$X(t) = X(0) + \\sigma\\, B\\big(M(t)\\big), \\qquad M(t) = \\int_0^t \\mathbf{1}\\{S(u) = M\\}\\, du,$$"),
+    shiny::p("$$X(t) = X(0) + \\sigma\\, B\\big(M(t)\\big),$$"),
+    shiny::p("$$M(t) = \\int_0^t \\mathbf{1}\\{S(u) = M\\}\\, du,$$"),
     shiny::p("where \\(B\\) is a standard Brownian motion, \\(M(t)\\) is the total time spent moving up to time \\(t\\),",
              "\\(\\mathbf{1}\\{\\cdot\\}\\) is the indicator function and \\(\\sigma\\) is the mobility parameter.",
              "The animal stays put while resting.")
   ),
   MRME = shiny::tagList(
-    shiny::p("The true location \\(X(t)\\) follows the MR process above with parameters \\(\\lambda_M, \\lambda_R, \\sigma\\).",
-             "The GPS records it with error:"),
-    shiny::p("$$Y(t_i) = X(t_i) + \\epsilon_i, \\qquad \\epsilon_i \\sim N(0, \\sigma_\\epsilon^2 I) \\text{ independent},$$"),
-    shiny::p("where \\(t_i\\) is the \\(i\\)th observation time, \\(Y(t_i)\\) the recorded location, \\(I\\) the identity matrix",
+    shiny::p("The true location \\(X(t)\\) follows the Moving-Resting (MR) process: the animal alternates between",
+             "moving bouts (exponential with rate \\(\\lambda_M\\)), during which it moves as a Brownian motion with",
+             "mobility \\(\\sigma\\), and resting bouts (exponential with rate \\(\\lambda_R\\)), during which it stays put.",
+             "The GPS records the location with error:"),
+    shiny::p("$$Y(t_i) = X(t_i) + \\epsilon_i,$$"),
+    shiny::p("where the errors \\(\\epsilon_i \\sim N(0, \\sigma_\\epsilon^2 I)\\) are independent,",
+             "\\(t_i\\) is the \\(i\\)th observation time, \\(Y(t_i)\\) the recorded location, \\(I\\) the identity matrix",
              "and \\(\\sigma_\\epsilon\\) the standard deviation of the measurement error.",
              "Estimation maximises a composite likelihood (Hu et al., 2021).")
   ),
@@ -29,13 +33,14 @@ model_math <- list(
     shiny::p("Two moving states \\(M_1\\) and \\(M_2\\) with bout rates \\(\\lambda_1, \\lambda_2\\). The location moves as",
              "a Brownian motion with mobility \\(\\sigma_1\\) in \\(M_1\\) and \\(\\sigma_2\\) in \\(M_2\\), where",
              "\\(\\sigma_1 > \\sigma_2\\):"),
-    shiny::p("$$X(t) = X(0) + \\sigma_1 B_1\\big(M_1(t)\\big) + \\sigma_2 B_2\\big(M_2(t)\\big),$$"),
+    shiny::p("$$X(t) = X(0) + \\sigma_1 B_1\\big(M_1(t)\\big)$$"),
+    shiny::p("$$\\qquad\\qquad + \\sigma_2 B_2\\big(M_2(t)\\big),$$"),
     shiny::p("where \\(B_1, B_2\\) are independent standard Brownian motions and \\(M_k(t)\\) is the time spent in state \\(M_k\\) up to \\(t\\).")
   ),
   BMME = shiny::tagList(
     shiny::p("The animal always moves:"),
-    shiny::p("$$Y(t_i) = \\sigma B(t_i) + \\epsilon_i, \\qquad \\epsilon_i \\sim N(0, \\delta^2) \\text{ independent},$$"),
-    shiny::p("where \\(\\sigma\\) is the mobility of the Brownian motion \\(B\\) and \\(\\delta\\) is the measurement error",
+    shiny::p("$$Y(t_i) = \\sigma B(t_i) + \\epsilon_i,$$"),
+    shiny::p("where the errors \\(\\epsilon_i \\sim N(0, \\delta^2)\\) are independent, \\(\\sigma\\) is the mobility of the Brownian motion \\(B\\) and \\(\\delta\\) is the measurement error",
              "standard deviation. Leave the starting values empty to use a moment estimator.")
   )
 )
