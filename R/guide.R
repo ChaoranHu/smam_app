@@ -70,7 +70,7 @@ references <- shiny::tags$ol(
 
 guide_panel <- function() {
   shiny::withMathJax(shiny::div(
-    class = "container-md py-3", style = "max-width: 920px;",
+    class = "container-md py-4 guide", style = "max-width: 920px;",
     shiny::h3("What this app does"),
     shiny::p("This app is a point and click front end for the R package",
              shiny::a("smam", href = "https://github.com/ChaoranHu/smam", target = "_blank"),
@@ -108,7 +108,7 @@ guide_panel <- function() {
              "displacement along each coordinate has standard deviation \\(\\sigma\\sqrt{h}\\) km."),
     lapply(names(smam_models), function(id) {
       m <- smam_models[[id]]
-      shiny::div(class = "mb-3",
+      shiny::div(class = "model-block",
                  shiny::h5(m$name),
                  shiny::p(class = "text-muted", m$summary),
                  model_math[[id]])

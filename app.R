@@ -73,35 +73,28 @@ sim_inputs <- function(model) {
 # ---- UI --------------------------------------------------------------------
 
 ui <- page_navbar(
-  title = "smam: animal movement models",
+  title = tags$span(span(class = "brand-mark", icon("route")), "smam",
+                    span(class = "brand-sub d-none d-md-inline", "animal movement models")),
+  window_title = "smam: animal movement models",
   id = "nav",
-  theme = bs_theme(version = 5, bootswatch = "flatly"),
+  theme = app_theme(),
   fillable = FALSE,
   header = tagList(
     withMathJax(),
-    tags$style(HTML("
-      .small-log { font-size: 0.8rem; max-height: 260px; overflow-y: auto; }
-      .param-table td, .param-table th { padding: 0.3rem 0.6rem; }
-      .card { margin-bottom: 1rem; }
-      pre { white-space: pre-wrap; }
-      /* keep wide formulas and tables inside their card on small screens */
-      .MathJax_Display, .MJXc-display, mjx-container[display] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
-      .table-responsive table { min-width: 100%; }
-      #est_table td:first-child { min-width: 10rem; }
-      /* on phones, show the inputs first and then the results */
-      @media (max-width: 575.98px) {
-        html body .bslib-sidebar-layout.bslib-sidebar-layout { display: flex !important; flex-direction: column !important; }
-        html body .bslib-sidebar-layout.bslib-sidebar-layout > .sidebar { order: 1 !important; width: 100% !important; max-height: none !important; }
-        html body .bslib-sidebar-layout.bslib-sidebar-layout > .main { order: 2 !important; }
-        html body .bslib-sidebar-layout.bslib-sidebar-layout > .collapse-toggle { display: none !important; }
-        .bslib-value-box { min-height: 0 !important; }
-        .bslib-value-box .value-box-area { padding: 0.5rem 0.75rem !important; }
-      }
-      @media (max-width: 576px) {
-        .param-table td, .param-table th { padding: 0.25rem 0.35rem; font-size: 0.85rem; }
-        .bslib-value-box .value-box-value { font-size: 1.4rem; }
-        .navbar-brand { font-size: 1rem; }
-      }
+    tags$head(tags$meta(name = "theme-color", content = smam_pal$ink)),
+    tags$style(HTML(app_css())),
+    # On phones the results sit below the inputs, so jump to them after a button press.
+    tags$script(HTML("
+      $(document).on('click', '#fit_go, #state_go, #sim_go', function() {
+        if (window.innerWidth >= 576) return;
+        var main = $(this).closest('.bslib-sidebar-layout').children('.main')[0];
+        if (main) setTimeout(function() { main.scrollIntoView({ behavior: 'smooth' }); }, 300);
+      });
+      // close the phone menu after picking a tab
+      $(document).on('click', '.navbar-collapse.show .nav-link', function() {
+        var el = $(this).closest('.navbar-collapse')[0];
+        if (window.bootstrap && bootstrap.Collapse) bootstrap.Collapse.getOrCreateInstance(el).hide();
+      });
     "))
   ),
 
@@ -112,7 +105,8 @@ ui <- page_navbar(
       sidebar = sidebar(
         open = "always", max_height_mobile = "auto",
         width = 340,
-        radioButtons("src", "Data source",
+        tags$h6("Data source", class = "mt-0"),
+        radioButtons("src", NULL,
                      c("Example data" = "example", "Upload a CSV file" = "upload")),
         conditionalPanel("input.src == 'example'",
                          selectInput("example", "Example", example_choices)),
@@ -123,7 +117,7 @@ ui <- page_navbar(
                       c(Comma = ",", Semicolon = ";", Tab = "\t", Whitespace = ""))
         ),
         accordion(
-          open = c("Columns and units", "Segments"),
+          open = FALSE,
           accordion_panel(
             "Columns and units",
             selectInput("time_col", "Time column", NULL),
@@ -159,6 +153,8 @@ ui <- page_navbar(
         ),
         downloadButton("dl_prepared", "Download prepared data", class = "btn-outline-primary")
       ),
+      tab_intro(1, "Load a track",
+                "Pick an example or upload a CSV of GPS fixes. The app converts time to hours and distance to kilometres."),
       uiOutput("data_notes"),
       uiOutput("data_boxes"),
       navset_card_tab(
@@ -178,7 +174,8 @@ ui <- page_navbar(
       sidebar = sidebar(
         open = "always", max_height_mobile = "auto",
         width = 380,
-        selectInput("model", "Model", model_choices, selected = "MRME"),
+        tags$h6("Model", class = "mt-0"),
+        selectInput("model", NULL, model_choices, selected = "MRME"),
         uiOutput("model_summary"),
         tags$h6("Starting values"),
         lapply(names(smam_models), function(id) model_panel(id, start_inputs(id))),
@@ -212,6 +209,8 @@ ui <- page_navbar(
           actionButton("fit_cancel", "Cancel", class = "btn-outline-danger w-100")
         )
       ),
+      tab_intro(2, "Fit a movement model",
+                "Choose a model, set starting values and press Fit model. Fits run in the background and can be cancelled."),
       uiOutput("status_fit"),
       uiOutput("fit_mismatch"),
       card(card_header(textOutput("model_math_title", inline = TRUE)), uiOutput("model_math")),
@@ -226,7 +225,8 @@ ui <- page_navbar(
       sidebar = sidebar(
         open = "always", max_height_mobile = "auto",
         width = 360,
-        radioButtons("state_model", "Model",
+        tags$h6("Model", class = "mt-0"),
+        radioButtons("state_model", NULL,
                      c("Moving-Resting (MR)" = "MR", "Moving-Resting-Handling (MRH)" = "MRH")),
         radioButtons("state_source", "Parameters",
                      c("From the latest fit" = "fit", "Enter manually" = "manual")),
@@ -253,6 +253,8 @@ ui <- page_navbar(
         ),
         helpText("Uses all fixes of the prepared data, in order.")
       ),
+      tab_intro(3, "Estimate behavioural states",
+                "Find out when the animal was moving, resting or handling, using the fitted parameters."),
       uiOutput("status_state"),
       uiOutput("state_results")
     )
@@ -265,7 +267,9 @@ ui <- page_navbar(
       sidebar = sidebar(
         open = "always", max_height_mobile = "auto",
         width = 360,
-        selectInput("sim_model", "Model", model_choices, selected = "MR"),
+        tags$h6("Model", class = "mt-0"),
+        selectInput("sim_model", NULL, model_choices, selected = "MR"),
+        tags$h6("Parameters"),
         lapply(names(smam_models), sim_inputs),
         tags$h6("Observation times"),
         layout_columns(
@@ -282,6 +286,8 @@ ui <- page_navbar(
         actionButton("sim_go", "Simulate", class = "btn-primary w-100", icon = icon("dice")),
         uiOutput("sim_actions")
       ),
+      tab_intro(4, "Simulate tracks",
+                "Generate tracks from any model to build intuition, then send one to the Data tab to test the estimators."),
       uiOutput("sim_results")
     )
   ),
@@ -403,14 +409,15 @@ server <- function(input, output, session) {
     layout_columns(
       fill = FALSE,
       col_widths = breakpoints(xs = c(6, 6, 6, 6), lg = c(3, 3, 3, 3)),
-      value_box("Fixes", format(nrow(d), big.mark = ","),
-                p(if (!is.null(d$segment)) paste(format(used, big.mark = ","), "in segments") else ""),
-                theme = "primary"),
-      value_box("Duration", paste(signif(diff(range(d$time)), 4), "hr"),
-                p(sprintf("%.1f days", diff(range(d$time)) / 24)), theme = "secondary"),
-      value_box("Median interval", paste(signif(stats::median(dt), 3), "hr"),
-                p(sprintf("range %.3g to %.3g hr", min(dt), max(dt))), theme = "secondary"),
-      value_box("Segments", nseg, p(paste(length(coord_names(d)), "coordinate(s)")), theme = "secondary")
+      value_box(tagList(icon("location-dot"), "Fixes"), format(nrow(d), big.mark = ","),
+                p(if (!is.null(d$segment)) paste(format(used, big.mark = ","), "in segments") else "GPS locations"),
+                class = "vb"),
+      value_box(tagList(icon("clock"), "Duration"), paste(signif(diff(range(d$time)), 4), "hr"),
+                p(sprintf("%.1f days", diff(range(d$time)) / 24)), class = "vb"),
+      value_box(tagList(icon("stopwatch"), "Median interval"), paste(signif(stats::median(dt), 3), "hr"),
+                p(sprintf("range %.3g to %.3g hr", min(dt), max(dt))), class = "vb vb-accent"),
+      value_box(tagList(icon("layer-group"), "Segments"), nseg, p(paste(length(coord_names(d)), "coordinate(s)")),
+                class = "vb vb-accent")
     )
   })
 
@@ -421,12 +428,12 @@ server <- function(input, output, session) {
   output$plot_coords <- renderPlot(plot_coords(prepared_data()), res = 96)
   output$plot_steps <- renderPlot(plot_steps(prepared_data()), res = 96)
   output$table_prepared <- renderDT({
-    datatable(prepared_data(), rownames = FALSE, options = list(pageLength = 10, scrollX = TRUE)) |>
+    datatable(prepared_data(), rownames = FALSE, fillContainer = FALSE, class = "compact hover", options = list(pageLength = 10, scrollX = TRUE, dom = "tip", pagingType = "simple")) |>
       formatSignif(columns = c("time", coord_names(prepared_data())), digits = 6)
   })
   output$table_raw <- renderDT({
     req(raw_data())
-    datatable(raw_data(), rownames = FALSE, options = list(pageLength = 10, scrollX = TRUE))
+    datatable(raw_data(), rownames = FALSE, fillContainer = FALSE, class = "compact hover", options = list(pageLength = 10, scrollX = TRUE, dom = "tip", pagingType = "simple"))
   })
   output$dl_prepared <- downloadHandler(
     filename = function() "prepared_data.csv",
@@ -477,11 +484,11 @@ server <- function(input, output, session) {
     if (is.null(job) || !job$task %in% tasks) return(NULL)
     invalidateLater(1000)
     card(
-      class = "border-primary",
+      class = "status-card",
       card_header(
-        class = "d-flex justify-content-between",
+        class = "d-flex justify-content-between align-items-center",
         span(span(class = "spinner-border spinner-border-sm text-primary me-2"), job$label),
-        span(class = "text-muted", "running for ", format_seconds(job_elapsed(job)))
+        span(class = "text-muted small fw-normal", "running for ", format_seconds(job_elapsed(job)))
       ),
       if (nzchar(log <- job_log_tail(job))) tags$pre(class = "small-log mb-0", log)
       else card_body(class = "text-muted small", "Working. Press Cancel to stop.")
@@ -586,15 +593,20 @@ server <- function(input, output, session) {
   output$fit_results <- renderUI({
     f <- rv$fit
     if (is.null(f)) {
-      return(card(card_body(class = "text-muted",
-                            "Choose a model and press Fit model. Results appear here.")))
+      return(empty_state("chart-line", "Choose a model and press Fit model. The estimates, what they mean and their standard errors appear here."))
     }
     m <- smam_models[[f$model]]
     variant <- if (is.null(f$options$variant)) "" else f$options$variant
     n_used <- if (isTRUE(f$use_segment)) sum(f$data$segment != 0) else nrow(f$data)
     tagList(
       card(
-        card_header(paste("Estimates:", m$name)),
+        card_header(
+          class = "d-flex justify-content-between align-items-center gap-2 flex-wrap",
+          span(paste("Estimates:", m$name)),
+          if (convergence_ok(f$model, variant, f$convergence))
+            span(class = "badge rounded-pill text-bg-success", icon("check"), "converged")
+          else span(class = "badge rounded-pill text-bg-warning", icon("triangle-exclamation"), "not converged")
+        ),
         card_body(
           p(class = "text-muted small mb-1",
             sprintf("Fitted to %s fixes%s in %s. Log likelihood %s. Convergence: %s.",
@@ -602,9 +614,9 @@ server <- function(input, output, session) {
                     if (isTRUE(f$use_segment)) paste0(" in ", length(unique(f$data$segment[f$data$segment != 0])), " segments") else "",
                     format_seconds(f$elapsed), format(f$loglik, digits = 6),
                     convergence_note(f$model, variant, f$convergence))),
-          div(class = "table-responsive", tableOutput("est_table")),
-          tags$h6("What the estimates mean"),
-          div(class = "table-responsive", tableOutput("derived_table")),
+          div(class = "table-responsive param-wrap", tableOutput("est_table")),
+          tags$h6("What the estimates mean", class = "section-label"),
+          div(class = "table-responsive param-wrap", tableOutput("derived_table")),
           div(class = "d-flex gap-2",
               downloadButton("dl_estimates", "Download estimates", class = "btn-outline-primary btn-sm"))
         )
@@ -782,8 +794,7 @@ server <- function(input, output, session) {
   output$state_results <- renderUI({
     s <- rv$states
     if (is.null(s)) {
-      return(card(card_body(class = "text-muted",
-                            "Estimate the behavioural state at each fix. Results appear here.")))
+      return(empty_state("shoe-prints", "Press Estimate states to see the track coloured by behaviour and the probability of each state over time."))
     }
     lab <- state_labels()
     share <- round(100 * prop.table(table(factor(lab, levels = smam_models[[s$model]]$states))), 1)
@@ -825,7 +836,7 @@ server <- function(input, output, session) {
     req(s)
     df <- s$states
     df$state <- state_labels()
-    datatable(df, rownames = FALSE, options = list(pageLength = 10, scrollX = TRUE)) |>
+    datatable(df, rownames = FALSE, fillContainer = FALSE, class = "compact hover", options = list(pageLength = 10, scrollX = TRUE, dom = "tip", pagingType = "simple")) |>
       formatSignif(columns = setdiff(names(df), c("state", "states")), digits = 5)
   })
   output$dl_states <- downloadHandler(
@@ -896,8 +907,7 @@ server <- function(input, output, session) {
 
   output$sim_results <- renderUI({
     if (is.null(rv$sim)) {
-      return(card(card_body(class = "text-muted",
-                            "Set the model parameters and press Simulate.")))
+      return(empty_state("shuffle", "Set the model parameters and press Simulate. The simulated track and its data appear here."))
     }
     s <- rv$sim
     tagList(
@@ -920,12 +930,12 @@ server <- function(input, output, session) {
   output$sim_track <- renderPlot({
     s <- rv$sim
     req(s)
-    if (!is.null(s$states)) plot_track(s$data, "state", s$states) else plot_track(s$data, "time")
+    if (!is.null(s$states)) plot_track(s$data, "state", s$states, state_title = "True state") else plot_track(s$data, "time")
   }, res = 96)
   output$sim_coords <- renderPlot(plot_coords(rv$sim$data), res = 96)
   output$sim_table <- renderDT({
     d <- sim_frame()
-    datatable(d, rownames = FALSE, options = list(pageLength = 10, scrollX = TRUE)) |>
+    datatable(d, rownames = FALSE, fillContainer = FALSE, class = "compact hover", options = list(pageLength = 10, scrollX = TRUE, dom = "tip", pagingType = "simple")) |>
       formatSignif(columns = c("time", coord_names(rv$sim$data)), digits = 5)
   })
   output$dl_sim <- downloadHandler(
