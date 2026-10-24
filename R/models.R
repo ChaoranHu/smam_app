@@ -150,13 +150,19 @@ derived_quantities <- function(model, est) {
 }
 
 # How to read the convergence code returned by each fitting routine.
+uses_nloptr <- function(model, variant) {
+  model == "MRH" || (model == "MRME" && variant %in% c("exact", "naive"))
+}
+
+convergence_ok <- function(model, variant, code) {
+  if (uses_nloptr(model, variant)) code > 0 else code == 0
+}
+
 convergence_note <- function(model, variant, code) {
-  uses_nloptr <- model == "MRH" || (model == "MRME" && variant %in% c("exact", "naive"))
-  if (uses_nloptr) {
-    ok <- code > 0
+  ok <- convergence_ok(model, variant, code)
+  if (uses_nloptr(model, variant)) {
     paste0("nloptr status ", code, if (ok) " (success)" else " (did not converge, try other starting values)")
   } else {
-    ok <- code == 0
     paste0("optim code ", code, if (ok) " (converged)" else " (did not converge, try other starting values)")
   }
 }
