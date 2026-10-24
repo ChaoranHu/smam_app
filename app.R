@@ -84,6 +84,24 @@ ui <- page_navbar(
       .param-table td, .param-table th { padding: 0.3rem 0.6rem; }
       .card { margin-bottom: 1rem; }
       pre { white-space: pre-wrap; }
+      /* keep wide formulas and tables inside their card on small screens */
+      .MathJax_Display, .MJXc-display, mjx-container[display] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
+      .table-responsive table { min-width: 100%; }
+      #est_table td:first-child { min-width: 10rem; }
+      /* on phones, show the inputs first and then the results */
+      @media (max-width: 575.98px) {
+        html body .bslib-sidebar-layout.bslib-sidebar-layout { display: flex !important; flex-direction: column !important; }
+        html body .bslib-sidebar-layout.bslib-sidebar-layout > .sidebar { order: 1 !important; width: 100% !important; max-height: none !important; }
+        html body .bslib-sidebar-layout.bslib-sidebar-layout > .main { order: 2 !important; }
+        html body .bslib-sidebar-layout.bslib-sidebar-layout > .collapse-toggle { display: none !important; }
+        .bslib-value-box { min-height: 0 !important; }
+        .bslib-value-box .value-box-area { padding: 0.5rem 0.75rem !important; }
+      }
+      @media (max-width: 576px) {
+        .param-table td, .param-table th { padding: 0.25rem 0.35rem; font-size: 0.85rem; }
+        .bslib-value-box .value-box-value { font-size: 1.4rem; }
+        .navbar-brand { font-size: 1rem; }
+      }
     "))
   ),
 
@@ -92,6 +110,7 @@ ui <- page_navbar(
     "1. Data", icon = icon("table"),
     layout_sidebar(
       sidebar = sidebar(
+        open = "always", max_height_mobile = "auto",
         width = 340,
         radioButtons("src", "Data source",
                      c("Example data" = "example", "Upload a CSV file" = "upload")),
@@ -157,6 +176,7 @@ ui <- page_navbar(
     "2. Fit model", icon = icon("chart-line"),
     layout_sidebar(
       sidebar = sidebar(
+        open = "always", max_height_mobile = "auto",
         width = 380,
         selectInput("model", "Model", model_choices, selected = "MRME"),
         uiOutput("model_summary"),
@@ -193,7 +213,8 @@ ui <- page_navbar(
         )
       ),
       uiOutput("status_fit"),
-      card(card_header("Model"), uiOutput("model_math")),
+      uiOutput("fit_mismatch"),
+      card(card_header(textOutput("model_math_title", inline = TRUE)), uiOutput("model_math")),
       uiOutput("fit_results")
     )
   ),
@@ -203,6 +224,7 @@ ui <- page_navbar(
     "3. States", icon = icon("shoe-prints"),
     layout_sidebar(
       sidebar = sidebar(
+        open = "always", max_height_mobile = "auto",
         width = 360,
         radioButtons("state_model", "Model",
                      c("Moving-Resting (MR)" = "MR", "Moving-Resting-Handling (MRH)" = "MRH")),
@@ -241,6 +263,7 @@ ui <- page_navbar(
     "4. Simulate", icon = icon("shuffle"),
     layout_sidebar(
       sidebar = sidebar(
+        open = "always", max_height_mobile = "auto",
         width = 360,
         selectInput("sim_model", "Model", model_choices, selected = "MR"),
         lapply(names(smam_models), sim_inputs),
@@ -379,6 +402,7 @@ server <- function(input, output, session) {
     used <- if (is.null(d$segment)) nrow(d) else sum(d$segment != 0)
     layout_columns(
       fill = FALSE,
+      col_widths = breakpoints(xs = c(6, 6, 6, 6), lg = c(3, 3, 3, 3)),
       value_box("Fixes", format(nrow(d), big.mark = ","),
                 p(if (!is.null(d$segment)) paste(format(used, big.mark = ","), "in segments") else ""),
                 theme = "primary"),
@@ -484,7 +508,16 @@ server <- function(input, output, session) {
   # ---- fitting ----
 
   output$model_summary <- renderUI(p(class = "text-muted small", smam_models[[input$model]]$summary))
+  output$model_math_title <- renderText(paste("Model:", smam_models[[input$model]]$name))
   output$model_math <- renderUI(withMathJax(model_math[[input$model]]))
+
+  output$fit_mismatch <- renderUI({
+    f <- rv$fit
+    if (is.null(f) || identical(f$model, input$model)) return(NULL)
+    div(class = "alert alert-warning py-2 small",
+        sprintf("The estimates below are from the last fit (%s). Press Fit model to fit %s.",
+                smam_models[[f$model]]$name, smam_models[[input$model]]$name))
+  })
 
   has_segments <- reactive({
     d <- tryCatch(prepared_data(), error = function(e) NULL)
@@ -569,9 +602,9 @@ server <- function(input, output, session) {
                     if (isTRUE(f$use_segment)) paste0(" in ", length(unique(f$data$segment[f$data$segment != 0])), " segments") else "",
                     format_seconds(f$elapsed), format(f$loglik, digits = 6),
                     convergence_note(f$model, variant, f$convergence))),
-          tableOutput("est_table"),
+          div(class = "table-responsive", tableOutput("est_table")),
           tags$h6("What the estimates mean"),
-          tableOutput("derived_table"),
+          div(class = "table-responsive", tableOutput("derived_table")),
           div(class = "d-flex gap-2",
               downloadButton("dl_estimates", "Download estimates", class = "btn-outline-primary btn-sm"))
         )
@@ -607,7 +640,14 @@ server <- function(input, output, session) {
     df
   })
 
-  output$est_table <- renderTable(est_df(), sanitize.text.function = identity,
+  # On screen the meaning sits under the symbol, which keeps the table narrow on phones.
+  output$est_table <- renderTable({
+    df <- est_df()
+    df$Parameter <- paste0("<b>", df$Parameter, "</b><br><span class='small text-muted'>",
+                           df$Meaning, "</span>")
+    df$Meaning <- NULL
+    df
+  }, sanitize.text.function = identity,
                                   digits = 5, class = "param-table")
 
   output$derived_table <- renderTable({
@@ -621,6 +661,7 @@ server <- function(input, output, session) {
     content = function(file) {
       df <- est_df()
       df$Parameter <- names(rv$fit$estimate)
+      df$Meaning <- gsub("&[a-z]+;", "", df$Meaning)
       df$Unit <- gsub("&radic;", "sqrt ", df$Unit)
       utils::write.csv(df, file, row.names = FALSE)
     }
