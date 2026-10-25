@@ -137,7 +137,8 @@ app_css <- function() {
   .navbar-brand { display: flex; align-items: center; gap: .55rem; font-weight: 700; letter-spacing: -0.01em;
      font-family: {heading}; text-transform: {hcase}; }
   .brand-mark { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem;
-                border-radius: calc({radius} * .6); background: {accent}; color: #fff; font-size: .95rem; overflow: hidden; }
+                border-radius: calc({radius} * .6); background: {accent}; color: #fff; font-size: .95rem; overflow: hidden;
+                vertical-align: middle; margin-right: .15rem; }
   .brand-mark img { width: 100%; height: 100%; display: block; }
   .brand-sub { font-weight: 400; opacity: .7; font-size: .9rem; font-family: var(--bs-body-font-family); text-transform: none; }
   .navbar .nav-link { font-weight: 500; padding: .45rem .8rem !important; }
