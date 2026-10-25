@@ -134,13 +134,16 @@ app_css <- function() {
   .navbar .navbar-toggler { border-color: rgba(255,255,255,.3); }
   .navbar .navbar-toggler-icon { filter: invert(1) brightness(2); }
   .navbar { box-shadow: 0 1px 0 rgba(0,0,0,.08), 0 6px 18px rgba(0,0,0,.10); }
-  .navbar-brand { display: flex; align-items: center; gap: .55rem; font-weight: 700; letter-spacing: -0.01em;
-     font-family: {heading}; text-transform: {hcase}; }
+  .navbar-brand { display: flex; align-items: center; gap: .55rem; font-weight: 600; letter-spacing: .005em;
+     font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; text-transform: none; font-size: 1.55rem; }
   .brand-mark { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem;
                 border-radius: calc({radius} * .6); background: {accent}; color: #fff; font-size: .95rem; overflow: hidden;
                 vertical-align: middle; margin-right: .15rem; }
   .brand-mark img { width: 100%; height: 100%; display: block; }
-  .brand-sub { font-weight: 400; opacity: .7; font-size: .9rem; font-family: var(--bs-body-font-family); text-transform: none; }
+  .brand { display: flex; align-items: center; gap: .45rem; }
+  .brand-text { display: flex; flex-direction: column; line-height: 1.02; }
+  .brand-name { line-height: 1; }
+  .brand-sub { font-weight: 500; opacity: .75; font-size: .92rem; letter-spacing: .01em; text-transform: none; }
   .navbar .nav-link { font-weight: 500; padding: .45rem .8rem !important; }
   h1, h2, h3, h4, h5, .card-header { font-family: {heading}; }
   .tab-intro h2, .guide h3, .guide h4 { text-transform: {hcase}; letter-spacing: 0.01em; }
@@ -285,7 +288,7 @@ app_css <- function() {
     .bslib-value-box.vb .value-box-value { font-size: 1.3rem; }
     .bslib-value-box.vb .value-box-title { font-size: .68rem; }
     .param-wrap table td, .param-wrap table th { padding: .35rem .4rem; font-size: .85rem; }
-    .navbar-brand { font-size: 1.05rem; }
+    .navbar-brand { font-size: 1.4rem; }
     .card-header { padding: .7rem .85rem; }
     .card-body { padding: .8rem .85rem; }
   }
