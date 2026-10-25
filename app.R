@@ -73,9 +73,11 @@ sim_inputs <- function(model) {
 # ---- UI --------------------------------------------------------------------
 
 ui <- page_navbar(
-  title = tags$span(brand_mark(), "smam",
-                    span(class = "brand-sub d-none d-md-inline", "animal movement models")),
-  window_title = "smam: animal movement models",
+  title = tags$span(class = "brand", brand_mark(),
+                    span(class = "brand-text",
+                         span(class = "brand-name", "smam App"),
+                         span(class = "brand-sub d-none d-xl-block", "Statistical Modeling of Animal Movements"))),
+  window_title = "smam App: Statistical Modeling of Animal Movements",
   id = "nav",
   theme = app_theme(),
   fillable = FALSE,
@@ -83,7 +85,10 @@ ui <- page_navbar(
     withMathJax(),
     tags$head(tags$meta(name = "theme-color", content = active_theme()$pal$ink),
               tags$link(rel = "icon", type = "image/svg+xml", href = "smam-icon.svg"),
-              tags$link(rel = "apple-touch-icon", href = "apple-touch-icon.png")),
+              tags$link(rel = "apple-touch-icon", href = "apple-touch-icon.png"),
+              # Serif face for the app title, shared by all themes.
+              tags$link(rel = "stylesheet",
+                        href = "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap")),
     tags$style(HTML(app_css())),
     # On phones the results sit below the inputs, so jump to them after a button press.
     tags$script(HTML("
