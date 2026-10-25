@@ -49,7 +49,7 @@ jobs:
           rsconnect::setAccountInfo(name = "huchaoran", token = token, secret = secret)
           rsconnect::deployApp(
             appName = "smam_app",
-            appFiles = c("app.R", list.files("R", full.names = TRUE)),
+            appFiles = c("app.R", list.files("R", full.names = TRUE), list.files("www", full.names = TRUE)),
             account = "huchaoran",
             server = "shinyapps.io",
             forceUpdate = TRUE

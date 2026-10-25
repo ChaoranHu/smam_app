@@ -73,7 +73,7 @@ sim_inputs <- function(model) {
 # ---- UI --------------------------------------------------------------------
 
 ui <- page_navbar(
-  title = tags$span(span(class = "brand-mark", icon(active_theme()$brand_icon)), "smam",
+  title = tags$span(brand_mark(), "smam",
                     span(class = "brand-sub d-none d-md-inline", "animal movement models")),
   window_title = "smam: animal movement models",
   id = "nav",
@@ -81,7 +81,9 @@ ui <- page_navbar(
   fillable = FALSE,
   header = tagList(
     withMathJax(),
-    tags$head(tags$meta(name = "theme-color", content = active_theme()$pal$ink)),
+    tags$head(tags$meta(name = "theme-color", content = active_theme()$pal$ink),
+              tags$link(rel = "icon", type = "image/svg+xml", href = "smam-icon.svg"),
+              tags$link(rel = "apple-touch-icon", href = "apple-touch-icon.png")),
     tags$style(HTML(app_css())),
     # On phones the results sit below the inputs, so jump to them after a button press.
     tags$script(HTML("
@@ -226,7 +228,7 @@ ui <- page_navbar(
 
   # ---- States ----
   nav_panel(
-    "3. States", icon = icon("shoe-prints"),
+    "3. States", icon = cougar_track_icon(),
     layout_sidebar(
       sidebar = sidebar(
         open = "always", max_height_mobile = "auto",
@@ -807,7 +809,7 @@ server <- function(input, output, session) {
   output$state_results <- renderUI({
     s <- rv$states
     if (is.null(s)) {
-      return(empty_state("shoe-prints", "Press Estimate states to see the track coloured by behaviour and the probability of each state over time."))
+      return(empty_state(cougar_track_icon(), "Press Estimate states to see the track coloured by behaviour and the probability of each state over time."))
     }
     lab <- state_labels()
     share <- round(100 * prop.table(table(factor(lab, levels = smam_models[[s$model]]$states))), 1)
