@@ -1,67 +1,147 @@
 # Look and feel: colours, fonts, component styles and the matching ggplot theme.
 # One palette is used everywhere so the plots, tables and controls read as one design.
 
-smam_pal <- list(
-  ink      = "#17302B",  # navbar and headings
-  text     = "#24312F",
-  muted    = "#64716D",
-  page     = "#F4F5F0",  # page background, a warm off white
-  surface  = "#FFFFFF",  # cards and sidebar
-  line     = "#E2E5DD",
-  grid     = "#ECEEE8",
-  primary  = "#1F6F5F",  # deep teal green
-  tint     = "#E6F0EC",  # light primary for soft backgrounds
-  accent   = "#D9822B",  # ochre
-  blue     = "#2F6690",
-  olive    = "#7A9A3A",
-  danger   = "#B44A3C"
+# Each theme is a palette, a pair of fonts and plot colours. The active one is
+# chosen with the SMAM_THEME environment variable, falling back to the default.
+
+topo_pattern <- function(colour) {
+  # faint contour lines, like a topographic map, drawn as an inline SVG
+  svg <- sprintf(paste0(
+    "<svg xmlns='http://www.w3.org/2000/svg' width='360' height='120' viewBox='0 0 360 120'>",
+    "<g fill='none' stroke='%s' stroke-width='1'>",
+    "<path d='M-10 30 C 40 5, 90 55, 150 28 S 260 0, 370 35'/>",
+    "<path d='M-10 52 C 50 25, 100 78, 160 50 S 270 22, 370 58'/>",
+    "<path d='M-10 74 C 45 50, 110 100, 170 72 S 280 46, 370 80'/>",
+    "<path d='M-10 96 C 55 74, 115 120, 180 94 S 285 70, 370 102'/>",
+    "<ellipse cx='255' cy='30' rx='28' ry='10'/><ellipse cx='255' cy='30' rx='14' ry='5'/>",
+    "</g></svg>"), colour)
+  paste0("url(\"data:image/svg+xml,", utils::URLencode(svg, reserved = TRUE), "\")")
+}
+
+smam_themes <- list(
+
+  # the design from October 2026: teal with an ochre accent
+  teal = list(
+    label = "Teal", brand_icon = "route",
+    pal = list(ink = "#17302B", text = "#24312F", muted = "#64716D", page = "#F4F5F0",
+               surface = "#FFFFFF", line = "#E2E5DD", grid = "#ECEEE8", primary = "#1F6F5F",
+               tint = "#E6F0EC", accent = "#D9822B", blue = "#2F6690", olive = "#7A9A3A",
+               danger = "#B44A3C", soft = "#F7F8F5"),
+    base_font = "Inter", heading_font = "Inter", heading_weight = 600, heading_case = "none",
+    fonts_href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
+    radius = 0.9, pattern = FALSE,
+    states = c(moving = "#D9822B", resting = "#2F6690", handling = "#7A9A3A"),
+    series = c("#1F6F5F", "#D9822B", "#2F6690", "#8E5572", "#7A9A3A", "#B8860B", "#4F8FA8", "#C0574A"),
+    gradient = c("#E3A04F", "#9DB36B", "#3E9078", "#1F6F5F", "#17302B")
+  ),
+
+  # A. a field notebook: moss green, parchment and rust, serif headings
+  journal = list(
+    label = "Field journal", brand_icon = "feather-pointed",
+    pal = list(ink = "#26362A", text = "#2B2A26", muted = "#6F6A5D", page = "#F5F1E7",
+               surface = "#FFFDF8", line = "#E3DCCB", grid = "#EEE8DA", primary = "#3F6B4A",
+               tint = "#E8EEE2", accent = "#A4552B", blue = "#3D6A8A", olive = "#8A8F3C",
+               danger = "#9E3B2E", soft = "#F8F4EA"),
+    base_font = "Lato", heading_font = "Alegreya", heading_weight = 700, heading_case = "none",
+    fonts_href = "https://fonts.googleapis.com/css2?family=Alegreya:wght@500;700&family=Lato:wght@400;700&display=swap",
+    radius = 0.5, pattern = TRUE,
+    states = c(moving = "#A4552B", resting = "#3D6A8A", handling = "#8A8F3C"),
+    series = c("#3F6B4A", "#A4552B", "#3D6A8A", "#8A8F3C", "#7B4B6A", "#C08A3E", "#5E8C8C", "#6B5B45"),
+    gradient = c("#D9A45B", "#B3A866", "#7C9A62", "#3F6B4A", "#22331F")
+  ),
+
+  # B. tracking software: navy, signal orange and blue, crisp sans serif
+  telemetry = list(
+    label = "Telemetry", brand_icon = "satellite-dish",
+    pal = list(ink = "#0F1C2B", text = "#1C2733", muted = "#5D6A79", page = "#F1F3F6",
+               surface = "#FFFFFF", line = "#DCE1E7", grid = "#EAEDF1", primary = "#1D6FA5",
+               tint = "#E3EDF6", accent = "#E8743B", blue = "#1D6FA5", olive = "#2FA37F",
+               danger = "#C8463D", soft = "#F5F7F9"),
+    base_font = "Inter", heading_font = "Inter", heading_weight = 700, heading_case = "none",
+    fonts_href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap",
+    radius = 0.4, pattern = FALSE, mono_numbers = TRUE,
+    states = c(moving = "#E8743B", resting = "#1D6FA5", handling = "#2FA37F"),
+    series = c("#1D6FA5", "#E8743B", "#2FA37F", "#7A4FB0", "#D4A11E", "#C8463D", "#4BA3C7", "#5D6A79"),
+    gradient = c("#F2C14E", "#E8743B", "#B8457B", "#5A3F9E", "#1B2F6B")
+  ),
+
+  # C. park service signage: brown, forest green and gold, condensed capitals
+  park = list(
+    label = "National park", brand_icon = "paw",
+    pal = list(ink = "#3A2F24", text = "#2E2A22", muted = "#6E6656", page = "#F3F0E6",
+               surface = "#FFFFFF", line = "#E0D9C6", grid = "#ECE6D5", primary = "#4E6B2F",
+               tint = "#E9EEDD", accent = "#C98A2E", blue = "#4A6D8C", olive = "#4E6B2F",
+               danger = "#A8442F", soft = "#F7F4EC"),
+    base_font = "Roboto", heading_font = "Oswald", heading_weight = 500, heading_case = "uppercase",
+    fonts_href = "https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=Roboto:wght@400;500;700&display=swap",
+    radius = 0.3, pattern = TRUE,
+    states = c(moving = "#B5542E", resting = "#4A6D8C", handling = "#4E6B2F"),
+    series = c("#4E6B2F", "#B5542E", "#4A6D8C", "#C98A2E", "#6E4A6B", "#7A8B3A", "#3E7C7A", "#6E6656"),
+    gradient = c("#E3B65A", "#C98A2E", "#8C7A3A", "#4E6B2F", "#2B3A1E")
+  )
 )
 
+active_theme_id <- function() {
+  id <- Sys.getenv("SMAM_THEME", "teal")
+  if (id %in% names(smam_themes)) id else "teal"
+}
+active_theme <- function() smam_themes[[active_theme_id()]]
+
 app_theme <- function() {
-  inter <- font_link(
-    "Inter",
-    href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-  )
+  th <- active_theme()
+  pal <- th$pal
+  fonts <- font_link(th$base_font, href = th$fonts_href)
+  stack <- c("system-ui", "-apple-system", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif")
+  heading_stack <- if (th$heading_font == "Alegreya") c("Georgia", "serif") else stack
   bs_theme(
     version = 5,
-    bg = smam_pal$page, fg = smam_pal$text,
-    primary = smam_pal$primary, secondary = smam_pal$muted,
-    success = "#2E7D4F", info = smam_pal$blue, warning = smam_pal$accent,
-    danger = smam_pal$danger,
-    base_font = font_collection(inter, "system-ui", "-apple-system", "Segoe UI", "Roboto",
-                                "Helvetica Neue", "Arial", "sans-serif"),
-    heading_font = font_collection(inter, "system-ui", "-apple-system", "Segoe UI", "sans-serif"),
-    code_font = font_collection("ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"),
+    bg = pal$page, fg = pal$text,
+    primary = pal$primary, secondary = pal$muted,
+    success = "#2E7D4F", info = pal$blue, warning = pal$accent,
+    danger = pal$danger,
+    base_font = do.call(font_collection, c(list(fonts, th$base_font), as.list(stack))),
+    heading_font = do.call(font_collection, c(list(th$heading_font), as.list(heading_stack))),
+    code_font = font_collection("JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"),
     "font-size-base" = "0.95rem",
-    "headings-font-weight" = 600,
-    "border-radius" = "0.6rem",
-    "border-radius-sm" = "0.45rem",
-    "border-radius-lg" = "0.9rem",
-    "border-color" = smam_pal$line,
-    "navbar-bg" = smam_pal$ink,
-    "input-bg" = smam_pal$surface,
-    "link-color" = smam_pal$primary
+    "headings-font-weight" = th$heading_weight,
+    "border-radius" = paste0(th$radius * 0.67, "rem"),
+    "border-radius-sm" = paste0(th$radius * 0.5, "rem"),
+    "border-radius-lg" = paste0(th$radius, "rem"),
+    "border-color" = pal$line,
+    "navbar-bg" = pal$ink,
+    "input-bg" = pal$surface,
+    "link-color" = pal$primary
   )
 }
 
 app_css <- function() {
-  p <- smam_pal
+  th <- active_theme()
+  p <- c(th$pal, radius = paste0(th$radius, "rem"),
+         heading = paste0("'", th$heading_font, "', ", if (th$heading_font == "Alegreya") "Georgia, serif" else "system-ui, sans-serif"),
+         hcase = th$heading_case, hweight = th$heading_weight,
+         pattern = if (isTRUE(th$pattern)) topo_pattern("rgba(255,255,255,0.07)") else "none")
   css <- "
   body { background: {page}; letter-spacing: -0.005em; }
 
-  /* navbar */
-  .navbar.navbar-static-top, nav.navbar { background-color: {ink} !important; }
-  .navbar .navbar-brand, .navbar .nav-link { color: rgba(255,255,255,.82) !important; }
+  /* navbar: the selected tab is plain white text, the others are dimmed */
+  .navbar.navbar-static-top, nav.navbar { background-color: {ink} !important; background-image: {pattern};
+     background-size: 360px 120px; }
+  .navbar .navbar-brand, .navbar .nav-link { color: rgba(255,255,255,.68) !important; }
   .navbar .navbar-brand, .navbar .nav-link.active, .navbar .nav-link:hover { color: #FFFFFF !important; }
+  .navbar .nav-link.active { font-weight: 600; }
+  .navbar .nav-link, .navbar .nav-link.active, .navbar .nav-link:focus { background: none !important;
+     border: 0 !important; box-shadow: none !important; }
   .navbar .navbar-toggler { border-color: rgba(255,255,255,.3); }
   .navbar .navbar-toggler-icon { filter: invert(1) brightness(2); }
-  .navbar { box-shadow: 0 1px 0 rgba(0,0,0,.08), 0 6px 18px rgba(23,48,43,.12); }
-  .navbar-brand { display: flex; align-items: center; gap: .55rem; font-weight: 700; letter-spacing: -0.01em; }
+  .navbar { box-shadow: 0 1px 0 rgba(0,0,0,.08), 0 6px 18px rgba(0,0,0,.10); }
+  .navbar-brand { display: flex; align-items: center; gap: .55rem; font-weight: 700; letter-spacing: -0.01em;
+     font-family: {heading}; text-transform: {hcase}; }
   .brand-mark { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem;
-                border-radius: .55rem; background: {accent}; color: #fff; font-size: .95rem; }
-  .brand-sub { font-weight: 400; opacity: .7; font-size: .9rem; }
-  .navbar .nav-link { font-weight: 500; border-radius: .5rem; padding: .45rem .8rem !important; }
-  .navbar .nav-link.active { background: rgba(255,255,255,.12); }
+                border-radius: calc({radius} * .6); background: {accent}; color: #fff; font-size: .95rem; }
+  .brand-sub { font-weight: 400; opacity: .7; font-size: .9rem; font-family: var(--bs-body-font-family); text-transform: none; }
+  .navbar .nav-link { font-weight: 500; padding: .45rem .8rem !important; }
+  h1, h2, h3, h4, h5, .card-header { font-family: {heading}; }
+  .tab-intro h2, .guide h3, .guide h4 { text-transform: {hcase}; letter-spacing: 0.01em; }
 
   /* layout: the sidebar runs full height from the navbar down */
   .container-fluid > .tab-content > .tab-pane:has(> .bslib-sidebar-layout) { margin-top: 0 !important; }
@@ -91,7 +171,7 @@ app_css <- function() {
 
   /* cards */
   .card { --bs-card-bg: {surface}; --bs-card-border-color: {line}; --bs-card-cap-bg: transparent;
-          border-radius: .9rem; box-shadow: 0 1px 2px rgba(23,48,43,.04), 0 2px 8px rgba(23,48,43,.05);
+          border-radius: {radius}; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 2px 8px rgba(0,0,0,.05);
           margin-bottom: 1.25rem; }
   .card-header { font-weight: 600; color: {ink}; padding: .85rem 1.1rem; border-bottom: 1px solid {line}; }
   .card-header .badge { font-weight: 600; }
@@ -117,10 +197,10 @@ app_css <- function() {
 
   /* buttons and inputs */
   .btn { font-weight: 500; }
-  .btn-primary { box-shadow: 0 1px 2px rgba(23,48,43,.2); }
+  .btn-primary { box-shadow: 0 1px 2px rgba(0,0,0,.2); }
   .form-control, .form-select, .selectize-input { border-color: #D6DAD1; }
   .form-control:focus, .form-select:focus, .selectize-input.focus { border-color: {primary};
-     box-shadow: 0 0 0 .2rem rgba(31,111,95,.15); }
+     box-shadow: 0 0 0 .2rem {tint}; }
   .irs--shiny .irs-bar, .irs--shiny .irs-single { background: {primary}; border-color: {primary}; }
 
   /* tables */
@@ -151,8 +231,8 @@ app_css <- function() {
 
   /* status, alerts, empty states, code */
   .status-card { border-left: 4px solid {primary} !important; }
-  .small-log { font-size: .78rem; max-height: 260px; overflow-y: auto; margin: 0; background: #F7F8F5;
-               padding: .75rem 1rem; border-radius: 0 0 .9rem .9rem; }
+  .small-log { font-size: .78rem; max-height: 260px; overflow-y: auto; margin: 0; background: {soft};
+               padding: .75rem 1rem; border-radius: 0 0 {radius} {radius}; }
   .alert { border-radius: .7rem; border-width: 0; border-left: 4px solid; }
   .alert-warning { background: #FBF1E3; border-color: {accent}; color: #6B4310; }
   .alert-info { background: #EAF1F6; border-color: {blue}; color: #1E3F58; }
@@ -162,12 +242,12 @@ app_css <- function() {
                        border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
                        margin-bottom: .75rem; }
   .empty-state p { margin: 0 auto; max-width: 28rem; }
-  pre { white-space: pre-wrap; background: #F7F8F5; border: 1px solid {line}; border-radius: .6rem;
+  pre { white-space: pre-wrap; background: {soft}; border: 1px solid {line}; border-radius: .6rem;
         padding: .8rem 1rem; font-size: .82rem; color: {ink}; }
   .card > pre { margin: 1rem 1.1rem; }
 
   .shiny-notification { background: {surface}; color: {text}; border: 1px solid {line}; border-left: 4px solid {primary};
-                        border-radius: .7rem; box-shadow: 0 8px 24px rgba(23,48,43,.15); opacity: 1; }
+                        border-radius: .7rem; box-shadow: 0 8px 24px rgba(0,0,0,.12); opacity: 1; }
   .shiny-notification-warning { border-left-color: {accent}; }
   .shiny-notification-error { border-left-color: {danger}; }
 
@@ -175,7 +255,7 @@ app_css <- function() {
   .guide { line-height: 1.6; }
   .guide h3 { color: {ink}; }
   .guide h4 { color: {ink}; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid {line}; }
-  .guide .model-block { background: {surface}; border: 1px solid {line}; border-radius: .9rem;
+  .guide .model-block { background: {surface}; border: 1px solid {line}; border-radius: {radius};
                         padding: 1rem 1.25rem; margin-bottom: 1rem; }
   .guide .model-block h5 { color: {primary}; }
 
@@ -208,6 +288,9 @@ app_css <- function() {
     .card-body { padding: .8rem .85rem; }
   }
   "
+  if (isTRUE(th$mono_numbers)) css <- paste(css, "
+  .bslib-value-box.vb .value-box-value, #est_table td:nth-child(3), table.dataTable td, .param-wrap td { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .92em; }
+  .bslib-value-box.vb .value-box-value { font-size: 1.45rem; }")
   for (nm in names(p)) css <- gsub(paste0("{", nm, "}"), p[[nm]], css, fixed = TRUE)
   css
 }
@@ -228,7 +311,7 @@ empty_state <- function(icon_name, text) {
 
 # ggplot theme that matches the app.
 theme_smam <- function(base_size = 13) {
-  p <- smam_pal
+  p <- active_theme()$pal
   ggplot2::theme_minimal(base_size = base_size) +
     ggplot2::theme(
       plot.background = ggplot2::element_rect(fill = p$surface, colour = NA),

@@ -73,7 +73,7 @@ sim_inputs <- function(model) {
 # ---- UI --------------------------------------------------------------------
 
 ui <- page_navbar(
-  title = tags$span(span(class = "brand-mark", icon("route")), "smam",
+  title = tags$span(span(class = "brand-mark", icon(active_theme()$brand_icon)), "smam",
                     span(class = "brand-sub d-none d-md-inline", "animal movement models")),
   window_title = "smam: animal movement models",
   id = "nav",
@@ -81,7 +81,7 @@ ui <- page_navbar(
   fillable = FALSE,
   header = tagList(
     withMathJax(),
-    tags$head(tags$meta(name = "theme-color", content = smam_pal$ink)),
+    tags$head(tags$meta(name = "theme-color", content = active_theme()$pal$ink)),
     tags$style(HTML(app_css())),
     # On phones the results sit below the inputs, so jump to them after a button press.
     tags$script(HTML("
@@ -187,7 +187,13 @@ ui <- page_navbar(
           radioButtons("MRME_variant", "Estimator",
                        c("Composite likelihood (fitMRME, recommended)" = "exact",
                          "Naive composite likelihood (fitMRME_naive)" = "naive",
-                         "Discrete error approximation (fitMRMEapprox)" = "approx"))
+                         "Discrete error approximation (fitMRMEapprox, very slow)" = "approx")),
+          conditionalPanel(
+            "input.MRME_variant == 'approx'",
+            div(class = "alert alert-warning py-2 small",
+                "This estimator is very slow: one likelihood evaluation takes about 2 seconds for",
+                "10 fixes, and a fit needs hundreds of them. Use it only on a short track.")
+          )
         ),
         model_panel("MRH", numericInput("MRH_threads", "CPU threads", 2, min = 1, step = 1)),
         conditionalPanel(

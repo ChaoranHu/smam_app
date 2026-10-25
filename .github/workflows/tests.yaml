@@ -1,0 +1,96 @@
+# Tests for the app.
+#  * R tests: the data preparation, the model registry, the background worker
+#    for every model, the job manager and the figures (tests/testthat).
+#  * Browser tests: start the app and click through every tab on a desktop and
+#    a phone screen (tests/e2e/check.js), including formula rendering.
+#  * Live site: the same browser tests against https://huchaoran.shinyapps.io/smam_app/,
+#    run after each deploy and on demand.
+# Screenshots from the browser tests are attached to each run as artifacts.
+name: Tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Deploy to shinyapps.io"]
+    types: [completed]
+
+jobs:
+  r-tests:
+    if: github.event_name != 'workflow_run'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install GSL (needed to build smam)
+        run: sudo apt-get update && sudo apt-get install -y libgsl-dev
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - name: Install R packages
+        run: install.packages(c("shiny", "bslib", "DT", "ggplot2", "callr", "smam", "testthat"))
+        shell: Rscript {0}
+      - name: Run R tests
+        env:
+          SMAM_SLOW_TESTS: "false"
+        run: Rscript tests/testthat.R
+
+  browser-tests:
+    if: github.event_name != 'workflow_run'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install GSL (needed to build smam)
+        run: sudo apt-get update && sudo apt-get install -y libgsl-dev
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - name: Install R packages
+        run: install.packages(c("shiny", "bslib", "DT", "ggplot2", "callr", "smam"))
+        shell: Rscript {0}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright
+        run: npm install --no-save playwright@1.48.2 && npx playwright install --with-deps chromium
+      - name: Start the app
+        run: |
+          nohup Rscript -e 'shiny::runApp(".", port = 8765, launch.browser = FALSE)' > app.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8765 > /dev/null && break; sleep 2; done
+      - name: Click through the app
+        env:
+          BASE_URL: http://127.0.0.1:8765
+          SHOTS: e2e-shots
+          CHECK_MATH: "1"
+        run: node tests/e2e/check.js both
+      - name: App log
+        if: always()
+        run: cat app.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots-local
+          path: e2e-shots
+
+  live-site:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright
+        run: npm install --no-save playwright@1.48.2 && npx playwright install --with-deps chromium
+      - name: Wake the app (free shinyapps.io apps sleep when idle)
+        run: |
+          for i in $(seq 1 30); do curl -sf https://huchaoran.shinyapps.io/smam_app/ > /dev/null && break; sleep 5; done
+      - name: Click through the live app
+        env:
+          BASE_URL: https://huchaoran.shinyapps.io/smam_app/
+          SHOTS: e2e-shots
+        run: node tests/e2e/check.js both
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots-live
+          path: e2e-shots
