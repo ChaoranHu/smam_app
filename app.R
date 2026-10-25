@@ -466,7 +466,8 @@ server <- function(input, output, session) {
     isolate({
       rv$job <- NULL
       if (!res$ok) {
-        showNotification(paste(job$label, "failed:", res$error), type = "error", duration = NULL)
+        hint <- if (grepl("singular", res$error)) " Try more bootstrap samples or other starting values." else ""
+        showNotification(paste0(job$label, " failed: ", res$error, hint), type = "error", duration = NULL)
         return()
       }
       v <- res$value
@@ -742,6 +743,12 @@ server <- function(input, output, session) {
                  data = f$data, use_segment = FALSE, method = input$se_method,
                  nBS = max(2, as.integer(input$se_nBS %||% 25)),
                  numThreads = max(1, as.integer(input$se_threads)))
+    # Godambe estimates a 4 by 4 variability matrix from the bootstrap samples,
+    # which is singular with only a few of them
+    if (identical(spec$method, "Godambe") && spec$nBS < 10) {
+      showNotification("Godambe information needs at least 10 bootstrap samples.", type = "error")
+      return()
+    }
     launch("se", spec, "Computing standard errors")
   })
 

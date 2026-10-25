@@ -77,14 +77,18 @@ test_that("standard errors: MRME bootstrap and Godambe, MM bootstrap", {
   slow_tests()
   d <- sim_track("MRME", n = 25, Tend = 25)
   est <- c(lamM = 1, lamR = 0.5, sigma = 1, sig_err = 0.05)
-  for (method in c("pBootstrap", "Godambe")) {
-    for (variant in c("exact", "naive")) {
-      se <- smam_worker("se", list(model = "MRME", variant = variant, method = method,
-                                   estimate = est, nBS = 2, numThreads = 2, data = d))
-      expect_equal(dim(se$vcov), c(4, 4), info = paste(method, variant))
-      if (method == "pBootstrap") expect_equal(ncol(as.matrix(se$boot)), 4)
-    }
+  # each bootstrap replicate refits the model: about 2 minutes on 25 fixes
+  for (variant in c("exact", "naive")) {
+    se <- smam_worker("se", list(model = "MRME", variant = variant, method = "pBootstrap",
+                                 estimate = est, nBS = 2, numThreads = 2, data = d))
+    expect_equal(dim(se$vcov), c(4, 4), info = variant)
+    expect_equal(ncol(as.matrix(se$boot)), 4)
   }
+  # Godambe needs enough samples for its variability matrix; with 2 it is singular,
+  # which is why the app asks for at least 10
+  expect_error(smam_worker("se", list(model = "MRME", variant = "exact", method = "Godambe",
+                                      estimate = est, nBS = 2, numThreads = 2, data = d)),
+               "singular")
   dm <- sim_track("MM", n = 30, Tend = 30)
   se <- smam_worker("se", list(model = "MM", method = "pBootstrap", nBS = 2, numThreads = 2,
                                estimate = c(1, 0.1, 1, 0.1), data = dm))
