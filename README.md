@@ -53,6 +53,25 @@ install.packages(c("shiny", "bslib", "DT", "ggplot2", "callr", "smam"))
 shiny::runApp()
 ```
 
+## Tests
+
+```sh
+Rscript tests/testthat.R                     # R tests; SMAM_SLOW_TESTS=false skips the slow fits
+BASE_URL=http://127.0.0.1:8765 node tests/e2e/check.js both   # browser tests, needs playwright
+```
+
+The R tests cover data preparation, the model registry, every model, estimator,
+standard error method and state method in the background worker, the job manager
+and the figures. The browser tests click through every tab on a desktop and a phone
+screen and check that the formulas render. GitHub Actions runs both on every pull
+request, and runs the browser tests against the live site after each deploy, with
+screenshots attached to each run.
+
+## Themes
+
+`R/theme.R` holds the colour themes (`teal`, `journal`, `telemetry`, `park`). Set the
+environment variable `SMAM_THEME` to try one; the default is `park` (National park).
+
 ## Files
 
 * `app.R`: user interface and server logic.
@@ -62,3 +81,5 @@ shiny::runApp()
 * `R/data.R`: example data and data preparation.
 * `R/plots.R`: figures.
 * `R/guide.R`: Guide tab text and references.
+* `R/theme.R`: colours, fonts and the matching ggplot theme.
+* `tests/`: R tests (`testthat`) and browser tests (`e2e`).

@@ -1,14 +1,9 @@
 # ggplot2 figures shared by the Data, States and Simulate tabs.
 
-state_colours <- c(moving = "#D9822B", resting = "#2F6690", handling = "#7A9A3A",
-                   "not used" = "#C9CEC5")
-
-# Colours for segments and for coordinates; teal first, then ochre, blue, plum, olive.
-series_colours <- c("#1F6F5F", "#D9822B", "#2F6690", "#8E5572", "#7A9A3A", "#B8860B",
-                    "#4F8FA8", "#C0574A")
-
-# Time gradient from ochre to deep teal; every step stays visible on white.
-time_gradient <- c("#E3A04F", "#9DB36B", "#3E9078", "#1F6F5F", "#17302B")
+# Plot colours come from the active theme (R/theme.R).
+state_colours <- function() c(active_theme()$states, "not used" = "#C9CEC5")
+series_colours <- function() active_theme()$series
+time_gradient <- function() active_theme()$gradient
 
 plot_track <- function(d, colour_by = c("time", "segment", "state"), states = NULL,
                        state_title = "Estimated state") {
@@ -31,13 +26,13 @@ plot_track <- function(d, colour_by = c("time", "segment", "state"), states = NU
   } else if (colour_by == "state" && !is.null(states)) {
     df$state <- states
     p <- p + ggplot2::geom_point(data = df, ggplot2::aes(colour = state), size = 1.4) +
-      ggplot2::scale_colour_manual(values = state_colours, name = state_title)
+      ggplot2::scale_colour_manual(values = state_colours(), name = state_title)
   } else {
     p <- p + ggplot2::geom_point(ggplot2::aes(colour = time), size = 1.2) +
-      ggplot2::scale_colour_gradientn(colours = time_gradient, name = "time (hr)")
+      ggplot2::scale_colour_gradientn(colours = time_gradient(), name = "time (hr)")
   }
   p + ggplot2::geom_point(data = df[1, ], shape = 24, size = 3.2, fill = "#FFFFFF",
-                        colour = "#17302B", stroke = 0.9) +
+                        colour = active_theme()$pal$ink, stroke = 0.9) +
     ggplot2::coord_equal() +
     ggplot2::labs(x = paste(cn[1], "(km)"), y = paste(cn[2], "(km)"),
                   caption = "Triangle marks the first location") +
@@ -46,7 +41,7 @@ plot_track <- function(d, colour_by = c("time", "segment", "state"), states = NU
 
 scales_hue <- function(n) {
   if (n <= 0) return(character())
-  if (n <= length(series_colours)) return(series_colours[seq_len(n)])
+  if (n <= length(series_colours())) return(series_colours()[seq_len(n)])
   grDevices::hcl(h = seq(15, 375, length.out = n + 1)[seq_len(n)], c = 70, l = 50)
 }
 
@@ -66,7 +61,7 @@ plot_coords <- function(d) {
 plot_steps <- function(d) {
   dt <- diff(d$time)
   ggplot2::ggplot(data.frame(dt = dt), ggplot2::aes(dt)) +
-    ggplot2::geom_histogram(bins = 40, fill = "#1F6F5F", colour = "#FFFFFF", linewidth = 0.3) +
+    ggplot2::geom_histogram(bins = 40, fill = active_theme()$pal$primary, colour = "#FFFFFF", linewidth = 0.3) +
     ggplot2::scale_x_log10() +
     ggplot2::labs(x = "time between consecutive fixes (hr, log scale)", y = "count") +
     theme_smam()
@@ -82,18 +77,18 @@ plot_state_prob <- function(res, labels) {
   long$state <- factor(long$state, levels = labels)
   ggplot2::ggplot(long, ggplot2::aes(time, prob, fill = state)) +
     ggplot2::geom_area(position = "stack", alpha = 0.9, colour = "#FFFFFF", linewidth = 0.2) +
-    ggplot2::scale_fill_manual(values = state_colours, name = NULL) +
+    ggplot2::scale_fill_manual(values = state_colours(), name = NULL) +
     ggplot2::labs(x = "time (hr)", y = "posterior probability of state") +
     theme_smam() +
     ggplot2::theme(legend.position = "top", legend.justification = "left")
 }
 
 plot_state_path <- function(res, states) {
-  df <- data.frame(time = res$time, state = factor(states, levels = names(state_colours)))
+  df <- data.frame(time = res$time, state = factor(states, levels = names(state_colours())))
   df <- droplevels(df)
   ggplot2::ggplot(df, ggplot2::aes(time, state, colour = state)) +
     ggplot2::geom_point(size = 1.8, alpha = 0.85) +
-    ggplot2::scale_colour_manual(values = state_colours, guide = "none") +
+    ggplot2::scale_colour_manual(values = state_colours(), guide = "none") +
     ggplot2::labs(x = "time (hr)", y = NULL) +
     theme_smam()
 }
