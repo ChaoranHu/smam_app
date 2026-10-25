@@ -70,7 +70,7 @@ screenshots attached to each run.
 ## Themes
 
 `R/theme.R` holds the colour themes (`teal`, `journal`, `telemetry`, `park`). Set the
-environment variable `SMAM_THEME` to try one; the default is `teal`.
+environment variable `SMAM_THEME` to try one; the default is `park` (National park).
 
 ## Files
 

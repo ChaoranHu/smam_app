@@ -82,8 +82,8 @@ smam_themes <- list(
 )
 
 active_theme_id <- function() {
-  id <- Sys.getenv("SMAM_THEME", "teal")
-  if (id %in% names(smam_themes)) id else "teal"
+  id <- Sys.getenv("SMAM_THEME", "park")
+  if (id %in% names(smam_themes)) id else "park"
 }
 active_theme <- function() smam_themes[[active_theme_id()]]
 
