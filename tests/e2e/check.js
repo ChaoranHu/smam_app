@@ -90,6 +90,13 @@ async function run(kind) {
 
   await p.goto(BASE, { waitUntil: 'load' });
   await p.waitForSelector('#data_boxes .bslib-value-box', { timeout: 90000 });
+  const brand = await p.evaluate(async () => {
+    const img = document.querySelector('.brand-mark img');
+    const fav = document.querySelector('link[rel=icon]');
+    const favOk = !fav || (await fetch(fav.href)).ok;
+    return { ok: (!img || (img.complete && img.naturalWidth > 0)) && favOk, why: `image ${img ? img.naturalWidth : 'none'}, icon link ${fav ? favOk : 'none'}` };
+  });
+  check(tag('app icon loads'), brand.ok, brand.why);
   await idle(p, 1500);
 
   // ---- Data ----
@@ -220,7 +227,14 @@ async function run(kind) {
   for (const method of ['fb', 'viterbi']) {
     await setRadio(p, 'state_method', method); await idle(p);
     await p.click('#state_go');
-    await p.waitForFunction(() => document.querySelector('#state_track img') && !document.querySelector('#status_state .status-card'), null, { timeout: 180000 });
+    // Wait until the results card names this method and its table has rows, so
+    // the second run is not checked against the first run's output.
+    const label = method === 'fb' ? 'forward backward' : 'Viterbi';
+    await p.waitForFunction((label) => {
+      const head = document.querySelector('#state_results .card-header');
+      return document.querySelector('#state_track img') && !document.querySelector('#status_state .status-card') &&
+        head && head.innerText.includes(label) && document.querySelectorAll('#state_table tbody tr').length > 0;
+    }, label, { timeout: 180000 }).catch(() => {});
     await idle(p, 1500);
     const head = await text(p, '#state_results .card-header');
     check(tag(`States: MR ${method} draws track and path`), (await plotOk(p, 'state_track')) && (await plotOk(p, 'state_path')), head);

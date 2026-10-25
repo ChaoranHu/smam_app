@@ -67,7 +67,7 @@ smam_themes <- list(
 
   # C. park service signage: brown, forest green and gold, condensed capitals
   park = list(
-    label = "National park", brand_icon = "paw",
+    label = "National park", brand_icon = "paw", brand_image = "smam-icon.svg",
     pal = list(ink = "#3A2F24", text = "#2E2A22", muted = "#6E6656", page = "#F3F0E6",
                surface = "#FFFFFF", line = "#E0D9C6", grid = "#ECE6D5", primary = "#4E6B2F",
                tint = "#E9EEDD", accent = "#C98A2E", blue = "#4A6D8C", olive = "#4E6B2F",
@@ -137,7 +137,8 @@ app_css <- function() {
   .navbar-brand { display: flex; align-items: center; gap: .55rem; font-weight: 700; letter-spacing: -0.01em;
      font-family: {heading}; text-transform: {hcase}; }
   .brand-mark { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem;
-                border-radius: calc({radius} * .6); background: {accent}; color: #fff; font-size: .95rem; }
+                border-radius: calc({radius} * .6); background: {accent}; color: #fff; font-size: .95rem; overflow: hidden; }
+  .brand-mark img { width: 100%; height: 100%; display: block; }
   .brand-sub { font-weight: 400; opacity: .7; font-size: .9rem; font-family: var(--bs-body-font-family); text-transform: none; }
   .navbar .nav-link { font-weight: 500; padding: .45rem .8rem !important; }
   h1, h2, h3, h4, h5, .card-header { font-family: {heading}; }
@@ -314,6 +315,14 @@ cougar_track_icon <- function() {
     "<g transform='translate(2 42) scale(.56)'>", print, "</g>",
     "<g transform='translate(46 2) scale(.56)'>", print, "</g>",
     "</svg>"))
+}
+
+# Mark at the left of the navbar: the theme's own image (in www/) if it has
+# one, otherwise a Font Awesome icon.
+brand_mark <- function() {
+  th <- active_theme()
+  span(class = "brand-mark",
+       if (!is.null(th$brand_image)) tags$img(src = th$brand_image, alt = "") else icon(th$brand_icon))
 }
 
 # Header shown at the top of each step.
