@@ -72,6 +72,9 @@ screenshots attached to each run.
 `R/theme.R` holds the colour themes (`teal`, `journal`, `telemetry`, `park`). Set the
 environment variable `SMAM_THEME` to try one; the default is `park` (National park).
 
+The paw print in the app icon (`www/smam-icon.svg`) is the
+`paw` icon from [Ionicons](https://github.com/ionic-team/ionicons) (MIT licence).
+
 ## Files
 
 * `app.R`: user interface and server logic.
