@@ -226,7 +226,7 @@ ui <- page_navbar(
 
   # ---- States ----
   nav_panel(
-    "3. States", icon = icon("shoe-prints"),
+    "3. States", icon = cougar_track_icon(),
     layout_sidebar(
       sidebar = sidebar(
         open = "always", max_height_mobile = "auto",
@@ -807,7 +807,7 @@ server <- function(input, output, session) {
   output$state_results <- renderUI({
     s <- rv$states
     if (is.null(s)) {
-      return(empty_state("shoe-prints", "Press Estimate states to see the track coloured by behaviour and the probability of each state over time."))
+      return(empty_state(cougar_track_icon(), "Press Estimate states to see the track coloured by behaviour and the probability of each state over time."))
     }
     lab <- state_labels()
     share <- round(100 * prop.table(table(factor(lab, levels = smam_models[[s$model]]$states))), 1)

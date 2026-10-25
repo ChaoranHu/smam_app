@@ -41,11 +41,20 @@ const noSideScroll = (p) => p.evaluate(() => document.documentElement.scrollWidt
 const plotOk = (p, id) => p.evaluate((id) => { const i = document.querySelector(`#${id} img`); return !!i && i.naturalWidth > 50; }, id);
 
 async function goTab(p, phone, label) {
+  const link = p.locator('a.nav-link', { hasText: label }).first();
   if (phone) {
-    const open = await p.evaluate(() => !!document.querySelector('.navbar-collapse.show'));
-    if (!open) { await p.click('nav button.navbar-toggler, nav button.navbar-toggle'); await p.waitForTimeout(500); }
+    // Let any open or close animation of the menu finish, then open it if
+    // the link is hidden. Retry once: on a slow server the first tap can land
+    // while the menu is still settling.
+    for (let i = 0; i < 2 && !(await link.isVisible()); i++) {
+      await p.waitForFunction(() => !document.querySelector('.navbar .collapsing'), null, { timeout: 5000 }).catch(() => {});
+      if (await link.isVisible()) break;
+      await p.click('nav button.navbar-toggler, nav button.navbar-toggle');
+      await link.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+    }
+    await p.waitForFunction(() => !document.querySelector('.navbar .collapsing'), null, { timeout: 5000 }).catch(() => {});
   }
-  await p.locator('a.nav-link', { hasText: label }).first().click();
+  await link.click();
   await idle(p, 700);
   if (phone) {
     const stillOpen = await p.evaluate(() => !!document.querySelector('.navbar-collapse.show'));

@@ -238,7 +238,7 @@ app_css <- function() {
   .alert-info { background: #EAF1F6; border-color: {blue}; color: #1E3F58; }
   .alert-light { background: {tint}; border-color: {primary}; color: {ink}; }
   .empty-state { text-align: center; padding: 2.5rem 1rem; color: {muted}; }
-  .empty-state .icon { font-size: 1.6rem; color: {primary}; background: {tint}; width: 3.5rem; height: 3.5rem;
+  .empty-state .icon { font-size: 1.6rem; color: {primary}; background: {tint}; width: 3.5rem; height: 3.5rem; align-self: center;
                        border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
                        margin-bottom: .75rem; }
   .empty-state p { margin: 0 auto; max-width: 28rem; }
@@ -295,6 +295,27 @@ app_css <- function() {
   css
 }
 
+# Mountain lion (cougar) tracks: two prints walking up to the right. Each
+# print has four teardrop toes without claw marks over a heel pad with two
+# lobes on top and three below. Drawn in the current text colour at icon
+# size, like icon().
+cougar_track_icon <- function() {
+  print <- paste0(
+    "<ellipse cx='21' cy='37' rx='8' ry='10.5' transform='rotate(-28 21 37)'/>",
+    "<ellipse cx='39' cy='20' rx='8.5' ry='11' transform='rotate(-10 39 20)'/>",
+    "<ellipse cx='61' cy='17' rx='8.5' ry='11' transform='rotate(8 61 17)'/>",
+    "<ellipse cx='79' cy='32' rx='8' ry='10.5' transform='rotate(28 79 32)'/>",
+    "<path d='M50 55C45 49 37 49 33 53C26 60 19 70 19 80C19 88 25 92 31 91",
+    "C35 90 37 89 39 89C43 92 46 93 50 93C54 93 57 92 61 89C63 89 65 90 69 91",
+    "C75 92 81 88 81 80C81 70 74 60 67 53C63 49 55 49 50 55Z'/>")
+  HTML(paste0(
+    "<svg class='cougar-track' viewBox='0 0 104 100' width='1.15em' height='1.1em' ",
+    "fill='currentColor' aria-hidden='true' role='img' style='vertical-align:-0.18em'>",
+    "<g transform='translate(2 42) scale(.56)'>", print, "</g>",
+    "<g transform='translate(46 2) scale(.56)'>", print, "</g>",
+    "</svg>"))
+}
+
 # Header shown at the top of each step.
 tab_intro <- function(step, title, text) {
   div(class = "tab-intro",
@@ -305,7 +326,7 @@ tab_intro <- function(step, title, text) {
 # Placeholder shown before there are results.
 empty_state <- function(icon_name, text) {
   card(card_body(class = "empty-state",
-                 div(class = "icon", icon(icon_name)),
+                 div(class = "icon", if (inherits(icon_name, "html")) icon_name else icon(icon_name)),
                  p(text)))
 }
 
